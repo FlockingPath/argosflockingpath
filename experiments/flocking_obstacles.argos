@@ -21,12 +21,14 @@
       <actuators>
         <differential_steering implementation="default" />
         <leds                  implementation="default" medium="leds" />
+        <!-- <range_and_bearing     implementation="default" medium="rab" /> -->
       </actuators>
       <sensors>
        <!-- <footbot_light                       implementation="rot_z_only" show_rays="true" /> -->
         <colored_blob_omnidirectional_camera implementation="rot_z_only" medium="leds" show_rays="true" />
         <positioning implementation="default"/>	
         <footbot_proximity implementation="default" show_rays="true" />
+        <!-- <range_and_bearing     implementation="default" medium="rab" /> -->
       </sensors>
       
       <params>
@@ -34,10 +36,10 @@
         <wheel_turning hard_turn_angle_threshold="90"
                        soft_turn_angle_threshold="70"
                        no_turn_angle_threshold="10"
-                       max_speed="10"
+                       max_speed="40"
                        alpha="7.5" 
                        delta="0.1" 
-                       velocity="5"
+                       velocity="15"
                         />
                        
         <flocking target_distance="75"
@@ -85,7 +87,48 @@
     <cylinder id="c3" height="0.5" radius="0.15" movable="false">
     <body orientation="1,2,0" position="0,2,0"/>
     </cylinder>
+
+
+    <!-- Cylinder 6 -->
+    <cylinder id="c4" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="8,6,0"/>
+    </cylinder>
+
+    <!-- Cylinder 7 -->
+    <cylinder id="c5" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="6,4,0"/>
+    </cylinder>
+
+    <!-- Cylinder 8 -->
+    <cylinder id="c6" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="8.5, 2,0"/>
+    </cylinder>
+
+    <!-- Cylinder 9 -->
+    <cylinder id="c7" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="8,4,0"/>
+    </cylinder>
     
+    <!-- Cylinder 10 -->
+    <cylinder id="c8" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="7,7,0"/>
+    </cylinder>
+
+    <!-- Cylinder 11 -->
+    <cylinder id="c9" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="7,2,0"/>
+    </cylinder>
+
+    <!-- Cylinder 12 -->
+    <cylinder id="c10" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="6.5,5,0"/>
+    </cylinder>
+
+    <!-- Cylinder 13 -->
+    <cylinder id="c11" height="0.5" radius="0.15" movable="true" mass="1.0">
+      <body orientation="1,2,0" position="7,4,0"/>
+    </cylinder>
+        
      
     <!--
         You can distribute entities randomly. Here, we distribute
@@ -97,10 +140,10 @@
           and standard deviation is 360 degrees.
     -->
 
-    <box id="box1" movable="false" size="5,0.05,0.5">
+    <!-- <box id="box1" movable="false" size="5,0.05,0.5">
       <body orientation="50,2,0" position="8,4,0"/>
     </box>  -->
-   
+    -->
    
     <distribute>
       <position method="uniform" min="4,4,0" max="5,5,0" />
@@ -126,6 +169,7 @@
   <!-- ********* -->
   <media>
     <led id="leds" />
+    <!-- <range_and_bearing id="rab" /> -->
   </media>
 
   <!-- ****************** -->

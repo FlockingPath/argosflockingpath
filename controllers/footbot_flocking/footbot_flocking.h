@@ -47,6 +47,7 @@
 
 #include <loop_functions/flocking_loop_functions/flocking_loop_functions.h>
 #include <cmath>
+#include "../../pathfinding/dijkstra.h"
 /*
  * All the ARGoS stuff in the 'argos' namespace.
  * With this statement, you save typing argos:: every time.
@@ -204,6 +205,11 @@ public:
   map<string, CVector2> robotPos;
   map<string, double> connectedRobots;
   
+//   //check connectivity
+//     const CCI_PositioningSensor::SReading& GetPositioningSensorReading() const {
+//         return m_compassSensor->GetReading();
+//     }
+
 protected:
 
    /*
@@ -234,7 +240,9 @@ private:
    CCI_PositioningSensor* m_compassSensor;
    /* Pointer to the foot-bot proximity sensor */
    CCI_FootBotProximitySensor* m_pcProximity;
-		
+   
+   // CCI_RangeAndBearingActuator* m_pcRABA;
+   // CCI_RangeAndBearingSensor* m_pcRABS;
 
    /* The turning parameters. */
    SWheelTurningParams m_sWheelTurningParams;

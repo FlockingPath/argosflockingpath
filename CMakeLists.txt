@@ -20,7 +20,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find the ARGoS package, make sure to save the ARGoS prefix
 find_package(ARGoS REQUIRED)
-include_directories(${CMAKE_SOURCE_DIR} ${ARGOS_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR} ${ARGOS_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/pathfinding)
 link_directories(${ARGOS_LIBRARY_DIR})
 link_libraries(${ARGOS_LDFLAGS})
 
@@ -29,3 +29,7 @@ add_subdirectory(controllers)
 
 # Descend into the loop_functions directory
 add_subdirectory(loop_functions)
+
+# Descend into the pathfinding directory
+add_subdirectory(pathfinding)
+include_directories(${CMAKE_SOURCE_DIR}/pathfinding/dijkstra)

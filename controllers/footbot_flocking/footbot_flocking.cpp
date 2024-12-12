@@ -100,6 +100,9 @@ void CFootBotFlocking::Init(TConfigurationNode& t_node) {
    m_pcCamera = GetSensor  <CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
    m_compassSensor   = GetSensor <CCI_PositioningSensor>("positioning");
    m_pcProximity = GetSensor  <CCI_FootBotProximitySensor      >("footbot_proximity"    );
+   // // RABA System
+   // m_pcRABA = GetActuator<CCI_RangeAndBearingActuator>("range_and_bearing");
+   // m_pcRABS = GetSensor<CCI_RangeAndBearingSensor>("range_and_bearing");
    
       
    /*
@@ -137,10 +140,31 @@ int CFootBotFlocking::GetStatus(){
 /****************************************/
 
 void CFootBotFlocking::ControlStep() {
-	
 	m_sFlockingParams.TargetDistance = LoopFunctions->GetTargetDistance();  
 	 //LOG <<"LoopFunctions.TargetDistance =" << m_sFlockingParams.TargetDistance<<endl; 
-	
+   
+   argos::CVector3 position3D = m_compassSensor->GetReading().Position;
+   Node start = {static_cast<int>(position3D.GetX()), static_cast<int>(position3D.GetY()), 0, nullptr};
+   Node target = {static_cast<int>(Target.GetX()), static_cast<int>(Target.GetY()), 0, nullptr};
+   std::vector<Node> path;
+
+   // Use the path for navigation
+   bool recalculatePath = false;
+   static CVector2 lastTarget = Target;
+   static CVector2 lastPosition = CVector2(position3D.GetX(), position3D.GetY());
+
+   if (Target != lastTarget) {
+      recalculatePath = true;
+      lastTarget = Target;
+   }
+
+   if ((lastPosition - CVector2(position3D.GetX(), position3D.GetY())).Length() > 1.0) {
+      recalculatePath = true;
+      lastPosition = CVector2(position3D.GetX(), position3D.GetY());
+   }
+   if (recalculatePath) {      
+      path = LoopFunctions->m_pcGrid->CalcShortestPath(start.x, start.y, target.x, target.y);
+   }
 	
    /* Get readings from proximity sensor */
    const CCI_FootBotProximitySensor::TReadings& tProxReads = m_pcProximity->GetReadings();
@@ -155,11 +179,15 @@ void CFootBotFlocking::ControlStep() {
     * is far enough, continue going straight, otherwise curve a little
     */
     CRadians cAngle = cAccumulator.Angle();
+
+   //    LOG << "Robot ID: " << controllerID << std::endl;
+   //  LOG << "Proximity Sensor Readings: " << cAccumulator << std::endl;
    
    if(m_sWheelTurningParams.m_cGoStraightAngleRange.WithinMinBoundIncludedMaxBoundIncluded(cAngle) &&
       cAccumulator.Length() < m_sWheelTurningParams.m_fDelta ) {
       /* Go straight to the target location*/
       //m_pcWheels->SetLinearVelocity(m_fWheelVelocity, m_fWheelVelocity);
+      // Set wheel speeds based on path
       SetWheelSpeedsFromVector(VectorToTarget() + FlockingVector());
       Robot_state = MOVING;
    }
@@ -174,8 +202,42 @@ void CFootBotFlocking::ControlStep() {
          m_pcWheels->SetLinearVelocity(0.0f, m_sWheelTurningParams.m_fWheelVelocity);
          //LOG<<"left turn ..."<<endl;
       }
-  } 
+  }
 
+   if (!path.empty()) {
+        CVector2 nextStep(path[1].x - start.x, path[1].y - start.y);
+        nextStep.Normalize(); // Get direction of vector with unit length
+
+        CVector2 flockingVector = FlockingVector(); // Reintroduce flocking behavior
+
+        // Adjust weights to prioritize the target
+        CVector2 combinedVector = (nextStep * 0.95f) + (flockingVector * 0.05f);
+
+        // Local path adjustment based on proximity sensor readings
+        if (cAccumulator.Length() > m_sWheelTurningParams.m_fDelta) {
+            combinedVector += 0.2 * cAccumulator;
+        }
+        combinedVector *= 1.5f;
+
+        SetWheelSpeedsFromVector(combinedVector);
+
+   // // Share path info with nearby robots
+   // if (!path.empty()) {
+   //     m_pcRABA->SetData(0, path[1].x);
+   //     m_pcRABA->SetData(1, path[1].y);
+   // }
+
+   // // Receive path information from nearby robots
+   // const CCI_RangeAndBearingSensor::TReadings& tRABReadings = m_pcRABS->GetReadings();
+   // for (size_t i = 0; i < tRABReadings.size(); ++i) {
+   //     int receivedX = tRABReadings[i].Data[0];
+   //     int receivedY = tRABReadings[i].Data[1];
+   // }
+   }
+   //  // Check connectivity
+   //  if (LoopFunctions != nullptr) {
+   //      LoopFunctions->CheckConnectivity();
+   //  }
 }
 
 /****************************************/

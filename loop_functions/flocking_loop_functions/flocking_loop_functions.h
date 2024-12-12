@@ -5,6 +5,8 @@
 #include <argos3/core/simulator/entity/floor_entity.h>
 #include <argos3/core/utility/math/range.h>
 #include <argos3/core/utility/math/rng.h>
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
+#include "../../pathfinding/dijkstra.h"
 
 using namespace argos;
 using namespace std;
@@ -28,7 +30,13 @@ public:
    virtual void CheckConnectivity();
    virtual map<string, CVector2> GetRobotPosition();
 
+   void SetObstaclesInGrid();
+   std::pair<int, int> WorldToGridCoordinates(const CVector3& c_position);
+   // Dynamic obstacles
+   void UpdateObstaclePositions();
+
 	size_t DrawIDs;
+   Grid* m_pcGrid;
 
 private:
 
@@ -47,14 +55,12 @@ private:
    
    map<string, CVector2> robotPos;
    vector<string> connectedList;
-   
 
    //UInt32 m_unCollectedFood;
    //SInt64 m_nEnergy;
    //UInt32 m_unEnergyPerFoodItem;
    //UInt32 m_unEnergyPerWalkingRobot;
    UInt32 target_distance; 
-   
 };
 
 #endif

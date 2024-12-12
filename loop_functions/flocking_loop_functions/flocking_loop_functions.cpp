@@ -12,7 +12,8 @@ CFlockingLoopFunctions::CFlockingLoopFunctions() :
    m_cFlockingArenaSideY(-1.7f, 1.7f),
    m_pcFloor(NULL),
    m_pcRNG(NULL),
-   DrawIDs(1)
+   DrawIDs(1),
+   m_pcGrid(new Grid(100, 100)) // Initialize grid size
    //m_unCollectedFood(0),
    //m_nEnergy(0),
    //m_unEnergyPerFoodItem(1),
@@ -52,7 +53,7 @@ void CFlockingLoopFunctions::Init(TConfigurationNode& t_node) {
      // /* Get energy gain per item collected */
      // GetNodeAttribute(tFlocking, "energy_per_item", m_unEnergyPerFoodItem);
      // /* Get energy loss per walking robot */
-     // GetNodeAttribute(tFlocking, "energy_per_walking_robot", m_unEnergyPerWalkingRobot);
+     // GetNodeAttribute(tFlocking, "energy_per_walking_robot", m_unEnergyPerWalkingRobot); 
    }
    catch(CARGoSException& ex) {
       THROW_ARGOSEXCEPTION_NESTED("Error parsing loop functions!", ex);
@@ -72,6 +73,17 @@ void CFlockingLoopFunctions::Init(TConfigurationNode& t_node) {
 	    }   
 	    
 	    last_time_in_seconds = 0;
+	    
+	    m_pcGrid = new Grid(30, 30); // Init grid
+
+        // Set obstacles in the grid
+        m_pcGrid->SetObstacle(9, 3);
+        m_pcGrid->SetObstacle(0, 0);
+        m_pcGrid->SetObstacle(1, 0);
+        m_pcGrid->SetObstacle(0, 2);
+
+        // Convert world coordinates to grid coordinates
+        SetObstaclesInGrid();
 }
 
 /****************************************/
@@ -99,6 +111,7 @@ void CFlockingLoopFunctions::Reset() {
 void CFlockingLoopFunctions::Destroy() {
    /* Close the file */
    m_cOutput.close();
+   delete m_pcGrid; // Free allocated mem for Grid
 }
 
 /****************************************/
@@ -130,12 +143,28 @@ map<string, CVector2> CFlockingLoopFunctions::GetRobotPosition()
 	}
 
 
-void CFlockingLoopFunctions::CheckConnectivity()
-{
-	
-	}
-	
-	
+void CFlockingLoopFunctions::CheckConnectivity() {
+   //  for (auto& robot : m_tRobotStates) {
+   //      CFootBotFlocking& controller = dynamic_cast<CFootBotFlocking&>(robot.second->GetController());
+   //      const CCI_PositioningSensor::SReading& position = controller.GetPositioningSensor().GetReading();
+   //      CVector2 robotPos(position.Position.GetX(), position.Position.GetY());
+
+   //      bool isConnected = false;
+   //      for (auto& otherRobot : m_tRobotStates) {
+   //          if (robot.first != otherRobot.first) {
+   //              CFootBotFlocking& otherController = dynamic_cast<CFootBotFlocking&>(otherRobot.second->GetController());
+   //              const CCI_PositioningSensor::SReading& otherPosition = otherController.GetPositioningSensor().GetReading();
+   //              CVector2 otherRobotPos(otherPosition.Position.GetX(), otherPosition.Position.GetY());
+
+   //              if ((robotPos - otherRobotPos).Length() < m_fCommunicationRange) {
+   //                  isConnected = true;
+   //                  break;
+   //              }
+   //          }
+   //      }
+   //  }
+}
+
 /****************************************/
 /****************************************/
 void CFlockingLoopFunctions::IncreaseTargetDistance()
@@ -219,6 +248,68 @@ void CFlockingLoopFunctions::PreStep() {
     //         << m_unCollectedFood << "\t"
     //         << m_nEnergy 
     << std::endl;
+    
+    // Example usage of Dijkstra algorithm
+    Node start = {0, 0, 0, nullptr};
+    Node target = {10, 10, 0, nullptr};
+    std::vector<Node> path = m_pcGrid->CalcShortestPath(start.x, start.y, target.x, target.y);
+    // Use the path for navigation
+
+   //dynamicobs
+    static int step_counter = 0;
+    if (step_counter % 100 == 0) { // Update every 100 steps
+        UpdateObstaclePositions();
+    }
+    step_counter++;
+}
+
+/****************************************/
+/****************************************/
+
+// Function to convert world coordinates to grid coordinates
+std::pair<int, int> CFlockingLoopFunctions::WorldToGridCoordinates(const CVector3& c_position) {
+    int gridX = static_cast<int>(c_position.GetX() + 15); // Assuming grid center is at (15, 15)
+    int gridY = static_cast<int>(c_position.GetY() + 15);
+    return {gridX, gridY};
+}
+
+// Function to set obstacles in the grid
+void CFlockingLoopFunctions::SetObstaclesInGrid() {
+    // Example obstacles from the XML configuration
+    std::vector<CVector3> obstaclePositions = {
+        CVector3(9, 3, 0),
+        CVector3(0, 0, 0),
+        CVector3(1, 0, 0),
+        CVector3(0, 2, 0)
+    };
+
+    for (const auto& position : obstaclePositions) {
+        auto [gridX, gridY] = WorldToGridCoordinates(position);
+        m_pcGrid->SetObstacle(gridX, gridY);
+    }
+}
+
+/****************************************/
+/****************************************/
+//dynamicobs
+void CFlockingLoopFunctions::UpdateObstaclePositions() {
+    // Clear the current obstacles in the grid
+    m_pcGrid->ResetGrid();
+
+    // Loop through all obstacles and change their positions randomly
+    for (auto& obstacle : m_cFoodPos) {
+        // Randomly update obstacle position (within bounds)
+        Real random_x = m_pcRNG->Uniform(CRange<Real>(m_cFlockingArenaSideX.GetMin(), m_cFlockingArenaSideX.GetMax()));
+        Real random_y = m_pcRNG->Uniform(CRange<Real>(m_cFlockingArenaSideY.GetMin(), m_cFlockingArenaSideY.GetMax()));
+
+        // Set the new position for the obstacle
+        obstacle.SetX(random_x);
+        obstacle.SetY(random_y);
+
+        // Update the grid to reflect the new obstacle position
+        auto grid_coords = WorldToGridCoordinates(CVector3(random_x, random_y, 0));
+        m_pcGrid->SetObstacle(grid_coords.first, grid_coords.second);
+    }
 }
 
 /****************************************/
