@@ -56,8 +56,9 @@ void CFootBotManualControl::Init(TConfigurationNode& t_node) {
     *       <controllers><footbot_diffusion><sensors> sections. If you forgot to
     *       list a device in the XML and then you request it here, an error occurs.
     */
-   m_pcWheels = GetActuator<CCI_DifferentialSteeringActuator          >("differential_steering");
-   m_pcLEDs   = GetActuator<CCI_LEDsActuator                          >("leds");
+   //RAB
+   // m_pcWheels = GetActuator<CCI_DifferentialSteeringActuator          >("differential_steering");
+   // m_pcLEDs   = GetActuator<CCI_LEDsActuator                          >("leds");
    /*
     * Parse the config file
     */
